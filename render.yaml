@@ -1,0 +1,43 @@
+services:
+  # ── Backend (FastAPI) ─────────────────────────────────────────────────────
+  - type: web
+    name: road-safety-ai-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements-render.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHONPATH
+        value: /opt/render/project/src/backend
+      - key: SECRET_KEY
+        generateValue: true
+      - key: USE_SIMULATED_TRAFFIC
+        value: "true"
+      - key: USE_SIMULATED_AMBULANCE
+        value: "true"
+      - key: WATSONX_API_KEY
+        sync: false
+      - key: WATSONX_PROJECT_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENWEATHER_API_KEY
+        sync: false
+
+  # ── Frontend (React Static Site) ─────────────────────────────────────────
+  - type: web
+    name: road-safety-ai-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: road-safety-ai-backend
+          type: web
+          property: hostport
